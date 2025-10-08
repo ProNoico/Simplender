@@ -68,14 +68,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ customerToEdit, onSuccess, 
                 label="Nombre"
                 registration={register('name')}
                 error={errors.name?.message}
-                placeholder="Ej: Pamela Iamarino"
+                placeholder="Ej: Nombre Apellido"
             />
             <Input
                 label="Teléfono"
                 type="tel"
                 registration={register('phone')}
                 error={errors.phone?.message}
-                placeholder="Ej: 2252515652"
+                placeholder="Ej: 1122334455"
             />
             <Input
                 label="Email (Opcional)"
