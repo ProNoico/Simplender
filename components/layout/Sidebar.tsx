@@ -1,21 +1,22 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-// 1. Importar un nuevo ícono
 import { LayoutDashboard, Package, TrendingUp, Users, CheckSquare, User as UserIcon, LogOut, Sun, Receipt } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAppContext } from '../../contexts/AppContext';
 import { NavItem } from '../../types';
 
-// 2. Añadir el nuevo item de navegación
+// --- INICIO DE LA MODIFICACIÓN ---
+// Cambiamos la etiqueta 'Dashboard' por 'Resumen'
 const navItems: NavItem[] = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/', label: 'Resumen', icon: LayoutDashboard },
     { path: '/products', label: 'Productos', icon: Package },
     { path: '/sales', label: 'Ventas', icon: TrendingUp },
-    { path: '/expenses', label: 'Gastos', icon: Receipt }, // <-- NUEVA LÍNEA
+    { path: '/expenses', label: 'Gastos', icon: Receipt },
     { path: '/customers', label: 'Clientes', icon: Users },
     { path: '/tasks', label: 'Tareas', icon: CheckSquare },
     { path: '/profile', label: 'Perfil', icon: UserIcon },
 ];
+// --- FIN DE LA MODIFICACIÓN ---
 
 const Sidebar: React.FC = () => {
     const { signOut } = useAuth();
