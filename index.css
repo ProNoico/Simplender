@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Añade esta regla para forzar la barra de scroll y evitar saltos en el diseño */
+html {
+  overflow-y: scroll;
+}
