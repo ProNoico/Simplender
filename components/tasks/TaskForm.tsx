@@ -1,12 +1,15 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useTasks } from '../../hooks/useTasks';
 import type { TaskCategory } from '../../types';
 import Button from '../shared/Button';
 import Input from '../shared/Input';
 import Select from '../shared/Select';
+import { supabaseClient } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAppContext } from '../../contexts/AppContext';
+import toast from 'react-hot-toast';
 
 const taskCategories: TaskCategory[] = ['ventas', 'marketing', 'admin', 'finanzas', 'otro'];
 
@@ -19,6 +22,7 @@ const taskSchema = z.object({
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
+type TaskPayload = Omit<z.infer<typeof taskSchema>, 'dueDate'> & { due_date?: string };
 
 interface TaskFormProps {
     onSuccess: () => void;
@@ -26,28 +30,45 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onSuccess, onCancel }) => {
-    const filters = useMemo(() => ({ date: 'all', category: 'all' } as const), []);
-    const { addTask } = useTasks(filters);
+    const { user } = useAuth();
+    const { triggerRefresh } = useAppContext();
     
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
         mode: 'onBlur',
-        defaultValues: {
-            category: 'otro',
-        }
+        defaultValues: { category: 'otro' }
     });
-
+    
+    // --- INICIO DE LA CORRECCIÓN ---
+    // La lógica de `addTask` ahora vive aquí y usa el cliente de Supabase directamente.
     const onSubmit: SubmitHandler<TaskFormData> = async (data) => {
-        const result = await addTask({
+        if (!user) {
+            toast.error("Debes iniciar sesión para agregar una tarea.");
+            return;
+        }
+
+        const taskPayload: TaskPayload = {
             title: data.title,
             category: data.category,
             due_date: data.dueDate || undefined,
-        });
+        };
 
-        if (result && !result.error) {
+        try {
+            const { error } = await supabaseClient
+                .from('tasks')
+                .insert({ ...taskPayload, user_id: user.id });
+
+            if (error) throw error;
+
+            toast.success('¡Tarea agregada!');
+            triggerRefresh();
             onSuccess();
+        } catch (error: any) {
+            console.error("Error adding task:", error);
+            toast.error('No se pudo agregar la tarea.');
         }
     };
+    // --- FIN DE LA CORRECCIÓN ---
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
