@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useSales, NewSalePayload } from '../../hooks/useSales';
-import { useProducts } from '../../hooks/useProducts';
-import { useCustomers } from '../../hooks/useCustomers';
 import Button from '../shared/Button';
 import Input from '../shared/Input';
 import Select from '../shared/Select';
 import { formatCurrency } from '../../lib/utils';
 import toast from 'react-hot-toast';
+import { supabaseClient } from '../../lib/supabase';
+import { Product, Customer } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+
 
 // Esquema de validación para el formulario
 const saleSchema = z.object({
@@ -31,10 +33,53 @@ interface SaleFormProps {
 }
 
 const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
-    // Usamos los hooks existentes para obtener los datos necesarios
     const { addSale } = useSales({ startDate: null, endDate: null }, 1);
-    const { products } = useProducts(); // Hook para obtener productos
-    const { customers } = useCustomers(); // Hook para obtener clientes
+    const { user } = useAuth();
+    
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Estados locales para almacenar la lista COMPLETA de productos y clientes
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // useEffect para cargar todos los datos necesarios para el formulario una sola vez
+    useEffect(() => {
+        const fetchFormData = async () => {
+            if (!user) return;
+            setIsLoading(true);
+            try {
+                // Pedimos todos los productos (solo los activos)
+                const { data: productsData, error: productsError } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('is_active', true)
+                    .order('name', { ascending: true });
+
+                if (productsError) throw productsError;
+                setAllProducts(productsData || []);
+
+                // Pedimos todos los clientes
+                const { data: customersData, error: customersError } = await supabaseClient
+                    .from('customers')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('name', { ascending: true });
+                
+                if (customersError) throw customersError;
+                setAllCustomers(customersData || []);
+
+            } catch (error) {
+                toast.error("No se pudieron cargar los datos del formulario.");
+                console.error("Error fetching form data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchFormData();
+    }, [user]);
+    // --- FIN DE LA CORRECCIÓN ---
 
     const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SaleFormData>({
         resolver: zodResolver(saleSchema),
@@ -48,30 +93,27 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
     const watchedProductId = watch('productId');
     const watchedQuantity = watch('quantity');
 
-    // El cálculo del total ahora es solo una previsualización para el usuario
     const totalAmountPreview = React.useMemo(() => {
-        const product = products.find(p => p.id === watchedProductId);
+        const product = allProducts.find(p => p.id === watchedProductId);
         const quantity = parseInt(String(watchedQuantity), 10);
         if (product && quantity > 0) {
             return product.price * quantity;
         }
         return 0;
-    }, [watchedProductId, watchedQuantity, products]);
+    }, [watchedProductId, watchedQuantity, allProducts]);
 
     const onSubmit: SubmitHandler<SaleFormData> = async (data) => {
-        const product = products.find(p => p.id === data.productId);
+        const product = allProducts.find(p => p.id === data.productId);
         if (!product) {
             toast.error("Producto no encontrado. Por favor, recarga la página.");
             return;
         }
         
-        // Verificación de stock en el cliente para feedback inmediato
         if (data.quantity > product.current_stock) {
             toast.error(`Stock insuficiente. Solo quedan ${product.current_stock} unidades.`);
             return;
         }
 
-        // Construimos el payload para la nueva función RPC
         const salePayload: NewSalePayload = {
             p_product_id: data.productId,
             p_quantity: data.quantity,
@@ -87,6 +129,10 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
         }
     };
 
+    if (isLoading) {
+        return <div className="text-center p-8">Cargando datos del formulario...</div>;
+    }
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Select
@@ -95,7 +141,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
                 error={errors.productId?.message}
             >
                 <option value="">Selecciona un producto...</option>
-                {products.map(p => (
+                {allProducts.map(p => (
                     <option key={p.id} value={p.id}>{p.name} (Stock: {p.current_stock})</option>
                 ))}
             </Select>
@@ -106,7 +152,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
                 error={errors.customerId?.message}
             >
                 <option value="">Venta sin cliente</option>
-                {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {allCustomers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
 
             <Input

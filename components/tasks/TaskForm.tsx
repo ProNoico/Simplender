@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react'; // 1. Importar useMemo
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,9 +26,11 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onSuccess, onCancel }) => {
-    // ---- LA CORRECCIÓN ESTÁ EN ESTA LÍNEA ----
-    const { addTask } = useTasks({ date: 'all', category: 'all' });
-    // -----------------------------------------
+    // --- INICIO DE LA CORRECCIÓN ---
+    // 2. Memorizamos el objeto de filtros para evitar re-renderizados innecesarios en el hook.
+    const filters = useMemo(() => ({ date: 'all', category: 'all' } as const), []);
+    const { addTask } = useTasks(filters);
+    // --- FIN DE LA CORRECCIÓN ---
     
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<TaskFormData>({
         resolver: zodResolver(taskSchema),
@@ -42,7 +44,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSuccess, onCancel }) => {
         const result = await addTask({
             title: data.title,
             category: data.category,
-            due_date: data.dueDate || undefined, // Usar undefined en lugar de null si la columna lo permite
+            due_date: data.dueDate || undefined,
         });
 
         if (result && !result.error) {
@@ -54,13 +56,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSuccess, onCancel }) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
                 label="Título"
-                registration={register('title')}
+                {...register('title')}
                 error={errors.title?.message}
                 placeholder="Ej: Preparar pedido para Lucía"
             />
             <Select
                 label="Categoría"
-                registration={register('category')}
+                {...register('category')}
                 error={errors.category?.message}
             >
                 {taskCategories.map(cat => (
@@ -70,7 +72,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onSuccess, onCancel }) => {
             <Input
                 label="Fecha Límite (Opcional)"
                 type="date"
-                registration={register('dueDate')}
+                {...register('dueDate')}
                 error={errors.dueDate?.message}
             />
             <div className="pt-4 flex justify-end gap-3">
