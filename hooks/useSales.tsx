@@ -11,7 +11,6 @@ export interface SalesFilter {
     paymentMethod?: string | 'all';
 }
 
-// DEFINIMOS EL PAYLOAD PARA LA NUEVA FUNCIÓN RPC
 export interface NewSalePayload {
     p_product_id: string;
     p_quantity: number;
@@ -41,7 +40,11 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
 
             let query = supabaseClient
                 .from('sales')
-                .select(`*, customer:customers(name)`, { count: 'exact' })
+                // --- INICIO DE LA CORRECCIÓN ---
+                // Se corrige la sintaxis del join para que Supabase la interprete correctamente.
+                // La sintaxis correcta es: alias:columna_fk(columnas_a_traer)
+                .select(`*, customer:customer_id(name)`, { count: 'exact' })
+                // --- FIN DE LA CORRECCIÓN ---
                 .eq('user_id', user.id);
 
             if (filters.startDate) query = query.gte('created_at', filters.startDate);
@@ -77,7 +80,9 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
 
         let query = supabaseClient
             .from('sales')
-            .select(`*, customer:customers(name)`)
+             // --- INICIO DE LA CORRECCIÓN ---
+            .select(`*, customer:customer_id(name)`)
+            // --- FIN DE LA CORRECCIÓN ---
             .eq('user_id', user.id);
 
         if (filters.startDate) query = query.gte('created_at', filters.startDate);
@@ -95,11 +100,9 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
         return data || [];
     }, [user, filters]);
 
-    // --- FUNCIÓN `addSale` COMPLETAMENTE REFACTORIZADA ---
     const addSale = async (newSaleData: NewSalePayload) => {
         if (!user) return { error: 'User not found' };
 
-        // 1. Verificar límites del plan
         const { data: canCreate, error: checkError } = await supabaseClient.rpc('check_plan_limits', { p_table_name: 'sales' });
         if (checkError || !canCreate) {
             openModal('upgrade');
@@ -107,11 +110,9 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
         }
 
         try {
-            // 2. Llamar a la nueva función RPC única que maneja toda la transacción
             const { error } = await supabaseClient.rpc('handle_new_sale', newSaleData);
 
             if (error) {
-                // Manejar errores específicos de la base de datos
                 if (error.message.includes('stock_insufficient')) {
                     toast.error('No hay stock suficiente para esta venta.');
                 } else {
@@ -120,7 +121,6 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
                 return { error };
             }
 
-            // 3. Si todo va bien, mostrar éxito y refrescar la UI
             toast.success('¡Venta registrada con éxito!');
             triggerRefresh();
             return { error: null };
@@ -131,7 +131,6 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
             return { error };
         }
     };
-    // --- FIN DE LA REFACTORIZACIÓN ---
 
     return { sales, loading, addSale, totalPages, fetchAllSales };
 };
