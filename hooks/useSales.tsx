@@ -11,6 +11,16 @@ export interface SalesFilter {
     paymentMethod?: string | 'all';
 }
 
+// DEFINIMOS EL PAYLOAD PARA LA NUEVA FUNCIÓN RPC
+export interface NewSalePayload {
+    p_product_id: string;
+    p_quantity: number;
+    p_customer_id?: string;
+    p_payment_method: 'cash' | 'card' | 'transfer' | 'other';
+    p_notes?: string;
+}
+
+
 const ITEMS_PER_PAGE = 10;
 
 export const useSales = (filters: SalesFilter, currentPage: number) => {
@@ -36,7 +46,7 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
 
             if (filters.startDate) query = query.gte('created_at', filters.startDate);
             if (filters.endDate) query = query.lte('created_at', filters.endDate);
-            
+
             if (filters.paymentMethod && filters.paymentMethod !== 'all') {
                 query = query.eq('payment_method', filters.paymentMethod);
             }
@@ -46,12 +56,11 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
                 .range(from, to);
 
             if (error) throw error;
-            
+
             setSales(data || []);
             setTotalSales(count || 0);
 
         } catch (error: any) {
-            // AÑADIMOS UN LOG MÁS DETALLADO EN LA CONSOLA
             console.error("Error detallado al cargar las ventas:", error);
             toast.error('Error al cargar las ventas.');
         } finally {
@@ -86,9 +95,11 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
         return data || [];
     }, [user, filters]);
 
-    const addSale = async (newSaleData: Omit<Sale, 'id' | 'user_id' | 'created_at'>) => {
+    // --- FUNCIÓN `addSale` COMPLETAMENTE REFACTORIZADA ---
+    const addSale = async (newSaleData: NewSalePayload) => {
         if (!user) return { error: 'User not found' };
 
+        // 1. Verificar límites del plan
         const { data: canCreate, error: checkError } = await supabaseClient.rpc('check_plan_limits', { p_table_name: 'sales' });
         if (checkError || !canCreate) {
             openModal('upgrade');
@@ -96,26 +107,31 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
         }
 
         try {
-            const { data: productData, error: productError } = await supabaseClient.from('products').select('current_stock').eq('id', newSaleData.product_id).single();
-            if (productError || !productData) throw new Error('Producto no encontrado.');
-            const newStock = productData.current_stock - newSaleData.quantity;
-            if (newStock < 0) {
-                toast.error('No hay stock suficiente para esta venta.');
-                return { error: 'Stock insuficiente' };
+            // 2. Llamar a la nueva función RPC única que maneja toda la transacción
+            const { error } = await supabaseClient.rpc('handle_new_sale', newSaleData);
+
+            if (error) {
+                // Manejar errores específicos de la base de datos
+                if (error.message.includes('stock_insufficient')) {
+                    toast.error('No hay stock suficiente para esta venta.');
+                } else {
+                    throw error;
+                }
+                return { error };
             }
-            await supabaseClient.from('sales').insert({ ...newSaleData, user_id: user.id });
-            await supabaseClient.from('products').update({ current_stock: newStock }).eq('id', newSaleData.product_id);
-            if (newSaleData.customer_id) {
-                await supabaseClient.rpc('increment_customer_purchases', { p_customer_id: newSaleData.customer_id });
-            }
+
+            // 3. Si todo va bien, mostrar éxito y refrescar la UI
             toast.success('¡Venta registrada con éxito!');
             triggerRefresh();
             return { error: null };
+
         } catch (error: any) {
-            toast.error('No se pudo registrar la venta.');
+            console.error("Error en transacción de venta:", error);
+            toast.error('No se pudo registrar la venta. Intenta de nuevo.');
             return { error };
         }
     };
+    // --- FIN DE LA REFACTORIZACIÓN ---
 
     return { sales, loading, addSale, totalPages, fetchAllSales };
 };

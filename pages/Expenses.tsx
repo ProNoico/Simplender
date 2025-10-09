@@ -18,23 +18,34 @@ const expenseCategories: ExpenseCategory[] = ['proveedores', 'servicios', 'marke
 const Expenses: React.FC = () => {
     const [activeDateFilter, setActiveDateFilter] = useState<PredefinedDateFilter>('all');
     const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | 'all'>('all');
-    const [filters, setFilters] = useState<ExpenseFilter>({ startDate: null, endDate: null, category: 'all' });
     const [currentPage, setCurrentPage] = useState(1);
+    
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Usamos useMemo para crear el objeto de filtros de forma más eficiente y predecible.
+    const filters = useMemo(() => {
+        const now = new Date();
+        let newFilters: ExpenseFilter = { startDate: null, endDate: null, category: categoryFilter };
+
+        if (activeDateFilter === 'today') {
+            newFilters = { ...newFilters, startDate: startOfDay(now).toISOString(), endDate: endOfDay(now).toISOString() };
+        } else if (activeDateFilter === 'thisWeek') {
+            newFilters = { ...newFilters, startDate: startOfWeek(now).toISOString(), endDate: endOfWeek(now).toISOString() };
+        } else if (activeDateFilter === 'thisMonth') {
+            newFilters = { ...newFilters, startDate: startOfMonth(now).toISOString(), endDate: endOfMonth(now).toISOString() };
+        }
+        
+        return newFilters;
+    }, [activeDateFilter, categoryFilter]);
+    
+    // Este useEffect ahora solo se encarga de resetear la página cuando cambian los filtros.
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+    // --- FIN DE LA CORRECCIÓN ---
     
     const { expenses, loading, deleteExpense, totalPages, fetchAllExpenses } = useExpenses(filters, currentPage);
     const { openModal } = useAppContext();
 
-    useEffect(() => {
-        const now = new Date();
-        let newFilters: ExpenseFilter = { startDate: null, endDate: null, category: categoryFilter };
-
-        if (activeDateFilter === 'today') newFilters = { ...newFilters, startDate: startOfDay(now).toISOString(), endDate: endOfDay(now).toISOString() };
-        else if (activeDateFilter === 'thisWeek') newFilters = { ...newFilters, startDate: startOfWeek(now).toISOString(), endDate: endOfWeek(now).toISOString() };
-        else if (activeDateFilter === 'thisMonth') newFilters = { ...newFilters, startDate: startOfMonth(now).toISOString(), endDate: endOfMonth(now).toISOString() };
-        
-        setFilters(newFilters);
-        setCurrentPage(1);
-    }, [activeDateFilter, categoryFilter]);
 
     const handleExport = async () => {
         toast.loading('Preparando datos para exportar...');
@@ -42,7 +53,6 @@ const Expenses: React.FC = () => {
         toast.dismiss();
 
         if (allExpenses && allExpenses.length > 0) {
-            // Definimos las columnas con su clave y su etiqueta en español
             const columns = [
                 { key: 'description', label: 'Descripción' },
                 { key: 'amount', label: 'Monto' },
@@ -110,7 +120,7 @@ const Expenses: React.FC = () => {
                     <Button variant={activeDateFilter === 'thisMonth' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('thisMonth')}>Este Mes</Button>
                 </div>
                 <div className="w-full md:w-56">
-                     <select 
+                     <select
                         value={categoryFilter}
                         onChange={(e) => setCategoryFilter(e.target.value as ExpenseCategory | 'all')}
                         className="w-full h-12 px-3 py-2 border rounded-lg focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-200"
@@ -122,7 +132,7 @@ const Expenses: React.FC = () => {
                     </select>
                 </div>
             </div>
-            
+
             <Card>
                 <div className="overflow-x-auto">
                     {loading ? (

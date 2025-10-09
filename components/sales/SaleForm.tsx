@@ -2,14 +2,16 @@ import React from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useSales } from '../../hooks/useSales';
+import { useSales, NewSalePayload } from '../../hooks/useSales';
 import { useProducts } from '../../hooks/useProducts';
 import { useCustomers } from '../../hooks/useCustomers';
 import Button from '../shared/Button';
 import Input from '../shared/Input';
 import Select from '../shared/Select';
 import { formatCurrency } from '../../lib/utils';
+import toast from 'react-hot-toast';
 
+// Esquema de validación para el formulario
 const saleSchema = z.object({
     productId: z.string().min(1, { message: 'Debes seleccionar un producto.' }),
     customerId: z.string().optional(),
@@ -17,7 +19,8 @@ const saleSchema = z.object({
         .min(1, { message: 'La cantidad es requerida.' })
         .transform(val => parseInt(val, 10))
         .refine(val => val > 0, { message: 'La cantidad debe ser mayor a 0.' }),
-    paymentMethod: z.string().min(1, { message: 'Selecciona un método de pago.' }),
+    paymentMethod: z.enum(['cash', 'card', 'transfer', 'other']),
+    notes: z.string().optional(),
 });
 
 type SaleFormData = z.infer<typeof saleSchema>;
@@ -28,18 +31,25 @@ interface SaleFormProps {
 }
 
 const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
+    // Usamos los hooks existentes para obtener los datos necesarios
     const { addSale } = useSales({ startDate: null, endDate: null }, 1);
-    const { products } = useProducts();
-    const { customers } = useCustomers();
-    
+    const { products } = useProducts(); // Hook para obtener productos
+    const { customers } = useCustomers(); // Hook para obtener clientes
+
     const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SaleFormData>({
         resolver: zodResolver(saleSchema),
         mode: 'onBlur',
+        defaultValues: {
+            quantity: '1',
+            paymentMethod: 'cash',
+        },
     });
 
     const watchedProductId = watch('productId');
     const watchedQuantity = watch('quantity');
-    const totalAmount = React.useMemo(() => {
+
+    // El cálculo del total ahora es solo una previsualización para el usuario
+    const totalAmountPreview = React.useMemo(() => {
         const product = products.find(p => p.id === watchedProductId);
         const quantity = parseInt(String(watchedQuantity), 10);
         if (product && quantity > 0) {
@@ -51,25 +61,26 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
     const onSubmit: SubmitHandler<SaleFormData> = async (data) => {
         const product = products.find(p => p.id === data.productId);
         if (!product) {
-            alert("Producto no encontrado.");
+            toast.error("Producto no encontrado. Por favor, recarga la página.");
             return;
         }
-
+        
+        // Verificación de stock en el cliente para feedback inmediato
         if (data.quantity > product.current_stock) {
-            alert(`Stock insuficiente. Solo quedan ${product.current_stock} unidades de "${product.name}".`);
+            toast.error(`Stock insuficiente. Solo quedan ${product.current_stock} unidades.`);
             return;
         }
 
-        const result = await addSale({
-            product_id: data.productId,
-            // --- AÑADIMOS EL NOMBRE DEL PRODUCTO AL GUARDAR ---
-            product_name: product.name, 
-            // ------------------------------------------------
-            customer_id: data.customerId || undefined,
-            quantity: data.quantity,
-            amount: totalAmount,
-            payment_method: data.paymentMethod as any,
-        });
+        // Construimos el payload para la nueva función RPC
+        const salePayload: NewSalePayload = {
+            p_product_id: data.productId,
+            p_quantity: data.quantity,
+            p_customer_id: data.customerId || undefined,
+            p_payment_method: data.paymentMethod,
+            p_notes: data.notes || undefined,
+        };
+
+        const result = await addSale(salePayload);
 
         if (result && !result.error) {
             onSuccess();
@@ -80,16 +91,18 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Select
                 label="Producto"
-                registration={register('productId')}
+                {...register('productId')}
                 error={errors.productId?.message}
             >
-                <option value="" disabled>Selecciona un producto...</option>
-                {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.current_stock})</option>)}
+                <option value="">Selecciona un producto...</option>
+                {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} (Stock: {p.current_stock})</option>
+                ))}
             </Select>
-            
+
             <Select
                 label="Cliente (Opcional)"
-                registration={register('customerId')}
+                {...register('customerId')}
                 error={errors.customerId?.message}
             >
                 <option value="">Venta sin cliente</option>
@@ -100,14 +113,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
                 label="Cantidad"
                 type="number"
                 min="1"
-                registration={register('quantity')}
+                {...register('quantity')}
                 error={errors.quantity?.message}
-                defaultValue="1"
             />
-            
+
             <Select
                 label="Método de Pago"
-                registration={register('paymentMethod')}
+                {...register('paymentMethod')}
                 error={errors.paymentMethod?.message}
             >
                 <option value="cash">Efectivo</option>
@@ -117,9 +129,10 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
             </Select>
 
             <div className="pt-4 text-right">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">Monto Total</p>
-                <p className="text-2xl font-bold text-primary-500">{formatCurrency(totalAmount)}</p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">Monto Total (Aproximado)</p>
+                <p className="text-2xl font-bold text-primary-500">{formatCurrency(totalAmountPreview)}</p>
             </div>
+            
             <div className="pt-4 flex justify-end gap-3">
                 <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
                 <Button type="submit" disabled={isSubmitting}>
