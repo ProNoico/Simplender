@@ -81,12 +81,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSuccess, onC
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input label="Nombre del Producto" {...register('name')} error={errors.name?.message} />
+            <Input label="Nombre del Producto" registration={register('name')} error={errors.name?.message} />
             
             <div className="p-4 bg-neutral-50 rounded-lg space-y-3 dark:bg-neutral-700/50">
                 <h4 className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Calculadora de Precio</h4>
                 <div className="grid grid-cols-2 gap-4">
-                    <Input label="Costo" type="number" step="any" {...register('cost')} error={errors.cost?.message} placeholder="Ej: 1000" />
+                    <Input label="Costo" type="number" step="any" registration={register('cost')} error={errors.cost?.message} placeholder="Ej: 1000" />
                     <Input label="Ganancia (%)" type="number" value={gainPercentage} onChange={e => setGainPercentage(e.target.value)} placeholder="Ej: 100" name="gain" id="gain" />
                 </div>
                 <div className="bg-primary-50 dark:bg-primary-500/10 p-3 rounded-lg text-center">
@@ -116,8 +116,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ productToEdit, onSuccess, onC
                 </div>
             </div>
             
-            <Input label="Precio de Venta (Final)" type="number" step="any" {...register('price')} error={errors.price?.message} />
-            <Input label="Stock Actual" type="number" {...register('current_stock')} error={errors.current_stock?.message} />
+            <Input label="Precio de Venta (Final)" type="number" step="any" registration={register('price')} error={errors.price?.message} />
+            <Input label="Stock Actual" type="number" registration={register('current_stock')} error={errors.current_stock?.message} />
             
             <div className="pt-4 flex justify-end gap-3">
                 <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>

@@ -36,19 +36,15 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
     const { addSale } = useSales({ startDate: null, endDate: null }, 1);
     const { user } = useAuth();
     
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Estados locales para almacenar la lista COMPLETA de productos y clientes
     const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // useEffect para cargar todos los datos necesarios para el formulario una sola vez
     useEffect(() => {
         const fetchFormData = async () => {
             if (!user) return;
             setIsLoading(true);
             try {
-                // Pedimos todos los productos (solo los activos)
                 const { data: productsData, error: productsError } = await supabaseClient
                     .from('products')
                     .select('*')
@@ -59,7 +55,6 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
                 if (productsError) throw productsError;
                 setAllProducts(productsData || []);
 
-                // Pedimos todos los clientes
                 const { data: customersData, error: customersError } = await supabaseClient
                     .from('customers')
                     .select('*')
@@ -79,7 +74,6 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
 
         fetchFormData();
     }, [user]);
-    // --- FIN DE LA CORRECCIÓN ---
 
     const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<SaleFormData>({
         resolver: zodResolver(saleSchema),
@@ -137,7 +131,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Select
                 label="Producto"
-                {...register('productId')}
+                registration={register('productId')}
                 error={errors.productId?.message}
             >
                 <option value="">Selecciona un producto...</option>
@@ -148,7 +142,7 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
 
             <Select
                 label="Cliente (Opcional)"
-                {...register('customerId')}
+                registration={register('customerId')}
                 error={errors.customerId?.message}
             >
                 <option value="">Venta sin cliente</option>
@@ -159,13 +153,13 @@ const SaleForm: React.FC<SaleFormProps> = ({ onSuccess, onCancel }) => {
                 label="Cantidad"
                 type="number"
                 min="1"
-                {...register('quantity')}
+                registration={register('quantity')}
                 error={errors.quantity?.message}
             />
 
             <Select
                 label="Método de Pago"
-                {...register('paymentMethod')}
+                registration={register('paymentMethod')}
                 error={errors.paymentMethod?.message}
             >
                 <option value="cash">Efectivo</option>
