@@ -17,23 +17,34 @@ type PredefinedDateFilter = 'all' | 'today' | 'thisWeek' | 'thisMonth';
 const Sales: React.FC = () => {
     const [activeDateFilter, setActiveDateFilter] = useState<PredefinedDateFilter>('all');
     const [paymentMethodFilter, setPaymentMethodFilter] = useState('all');
-    const [filters, setFilters] = useState<SalesFilter>({ startDate: null, endDate: null, paymentMethod: 'all' });
     const [currentPage, setCurrentPage] = useState(1);
     
-    const { sales, loading, totalPages, fetchAllSales } = useSales(filters, currentPage);
-    const { openModal } = useAppContext();
-
-    useEffect(() => {
+    // --- INICIO DE LA CORRECCIÓN ---
+    // Usamos useMemo para crear el objeto de filtros. Este objeto solo se creará de nuevo
+    // si cambian los filtros de fecha o método de pago, rompiendo el bucle.
+    const filters = useMemo(() => {
         const now = new Date();
         let newFilters: SalesFilter = { startDate: null, endDate: null, paymentMethod: paymentMethodFilter };
 
-        if (activeDateFilter === 'today') newFilters = { ...newFilters, startDate: startOfDay(now).toISOString(), endDate: endOfDay(now).toISOString() };
-        else if (activeDateFilter === 'thisWeek') newFilters = { ...newFilters, startDate: startOfWeek(now).toISOString(), endDate: endOfWeek(now).toISOString() };
-        else if (activeDateFilter === 'thisMonth') newFilters = { ...newFilters, startDate: startOfMonth(now).toISOString(), endDate: endOfMonth(now).toISOString() };
+        if (activeDateFilter === 'today') {
+            newFilters = { ...newFilters, startDate: startOfDay(now).toISOString(), endDate: endOfDay(now).toISOString() };
+        } else if (activeDateFilter === 'thisWeek') {
+            newFilters = { ...newFilters, startDate: startOfWeek(now).toISOString(), endDate: endOfWeek(now).toISOString() };
+        } else if (activeDateFilter === 'thisMonth') {
+            newFilters = { ...newFilters, startDate: startOfMonth(now).toISOString(), endDate: endOfMonth(now).toISOString() };
+        }
         
-        setFilters(newFilters);
-        setCurrentPage(1);
+        return newFilters;
     }, [activeDateFilter, paymentMethodFilter]);
+    
+    // Este useEffect ahora solo se encarga de resetear la página
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+    // --- FIN DE LA CORRECCIÓN ---
+    
+    const { sales, loading, totalPages, fetchAllSales } = useSales(filters, currentPage);
+    const { openModal } = useAppContext();
     
     const handleExport = async () => {
         toast.loading('Preparando datos para exportar...');

@@ -29,13 +29,10 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
             const from = (currentPage - 1) * ITEMS_PER_PAGE;
             const to = from + ITEMS_PER_PAGE - 1;
 
-            // --- INICIO DE LA CORRECCIÓN ---
-            // Simplificamos la consulta para no hacer JOIN con la tabla de productos
             let query = supabaseClient
                 .from('sales')
                 .select(`*, customer:customers(name)`, { count: 'exact' })
                 .eq('user_id', user.id);
-            // --- FIN DE LA CORRECCIÓN ---
 
             if (filters.startDate) query = query.gte('created_at', filters.startDate);
             if (filters.endDate) query = query.lte('created_at', filters.endDate);
@@ -54,7 +51,8 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
             setTotalSales(count || 0);
 
         } catch (error: any) {
-            console.error("Error fetching sales:", error); // Añadimos un log más detallado
+            // AÑADIMOS UN LOG MÁS DETALLADO EN LA CONSOLA
+            console.error("Error detallado al cargar las ventas:", error);
             toast.error('Error al cargar las ventas.');
         } finally {
             setLoading(false);
@@ -68,7 +66,6 @@ export const useSales = (filters: SalesFilter, currentPage: number) => {
     const fetchAllSales = useCallback(async () => {
         if (!user) return [];
 
-        // Aplicamos la misma corrección a la función de exportar
         let query = supabaseClient
             .from('sales')
             .select(`*, customer:customers(name)`)
