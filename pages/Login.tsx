@@ -56,7 +56,7 @@ const Login: React.FC = () => {
                     </button>
                 </div>
                 <p className="mt-8 text-sm text-neutral-500">
-                    Al continuar, aceptás nuestros Términos de Servicio y Política de Privacidad.
+                    Al continuar, aceptás nuestros <Link to="/terms" className="underline hover:text-primary-500">Términos de Servicio</Link> y <Link to="/privacy" className="underline hover:text-primary-500">Política de Privacidad</Link>.
                 </p>
             </div>
         </div>

@@ -17,6 +17,8 @@ const Customers = lazy(() => import('./pages/Customers'));
 const Tasks = lazy(() => import('./pages/Tasks'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Expenses = lazy(() => import('./pages/Expenses')); // 1. Importar la nueva página
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 const App: React.FC = () => {
     return (
@@ -26,6 +28,8 @@ const App: React.FC = () => {
                     <Suspense fallback={<div className="w-full h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>}>
                         <Routes>
                             <Route path="/login" element={<Login />} />
+                            <Route path="/terms" element={<TermsOfService />} />
+                            <Route path="/privacy" element={<PrivacyPolicy />} />
                             <Route element={<ProtectedRoute />}>
                                 <Route element={<MainLayout />}>
                                     <Route path="/" element={<Dashboard />} />
