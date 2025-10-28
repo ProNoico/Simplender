@@ -52,73 +52,78 @@ const Profile: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-200">Mi Perfil</h1>
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 px-4 sm:px-0">
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-800 dark:text-neutral-200">Mi Perfil</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                    <Card className="p-6 mb-8">
-                         <h2 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Avatar</h2>
-                         <div className="flex items-center gap-4">
-                            <AvatarUploader />
-                            <div>
-                                <p className="text-neutral-600 dark:text-neutral-400 text-sm">Arrastra una imagen aquí o haz clic para seleccionarla.</p>
-                                <p className="text-neutral-500 dark:text-neutral-500 text-xs mt-1">Límite de 1MB. Formatos: PNG, JPG, GIF.</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div className="lg:col-span-2 space-y-6 md:space-y-8">
+                    <Card className="p-4 sm:p-6">
+                         <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Avatar</h2>
+                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="flex-shrink-0">
+                                <AvatarUploader />
+                            </div>
+                            <div className="flex-grow">
+                                <p className="text-neutral-600 dark:text-neutral-400 text-sm">Arrastra o haz clic para subir una imagen.</p>
+                                <p className="text-neutral-500 dark:text-neutral-500 text-xs mt-1">PNG, JPG, GIF (max 1MB).</p>
                             </div>
                          </div>
                     </Card>
 
                     <Card>
                         <form onSubmit={handleSubmit(onSubmit)}>
-                            <div className="p-6 space-y-6">
-                                <h2 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300">Datos del Usuario</h2>
+                            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                                <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300">Datos del Usuario</h2>
                                 <div>
                                     <label className="block text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">Email</label>
-                                    <input type="email" value={user.email} disabled className="w-full h-12 px-4 py-2 border bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-500 dark:text-neutral-400 cursor-not-allowed" />
+                                    <input type="email" value={user.email || ''} disabled className="w-full h-10 sm:h-12 px-3 sm:px-4 py-2 border bg-neutral-100 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600 rounded-lg text-neutral-500 dark:text-neutral-400 cursor-not-allowed" />
                                 </div>
                                 
                                 <Input
                                     label="Nombre Completo"
                                     registration={register('full_name')}
                                     error={errors.full_name?.message}
+                                    className="h-10 sm:h-12"
                                 />
                                 <Input
                                     label="Nombre del Negocio"
                                     registration={register('business_name')}
                                     error={errors.business_name?.message}
+                                    className="h-10 sm:h-12"
                                 />
                                 <Input
                                     label="Teléfono"
                                     type="tel"
                                     registration={register('phone')}
                                     error={errors.phone?.message}
+                                    className="h-10 sm:h-12"
                                 />
                             </div>
-                            <div className="bg-neutral-50 dark:bg-neutral-800/50 px-6 py-4 rounded-b-xl text-right">
-                                <Button type="submit" disabled={isSubmitting} className="h-12">
+                            <div className="bg-neutral-50 dark:bg-neutral-800/50 px-4 sm:px-6 py-3 sm:py-4 rounded-b-xl text-right">
+                                <Button type="submit" disabled={isSubmitting} className="h-10 sm:h-12 w-full sm:w-auto">
                                     {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                                 </Button>
                             </div>
                         </form>
                     </Card>
                 </div>
-                <div className="space-y-6">
-                     <Card className="p-6">
-                         <h2 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Plan Actual</h2>
+                <div className="space-y-6 md:space-y-8">
+                     <Card className="p-4 sm:p-6">
+                         <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Plan Actual</h2>
                          <div className="flex items-center justify-between">
-                            <p className="text-lg text-neutral-800 dark:text-neutral-200">Plan</p>
-                            <span className="px-3 py-1 text-sm font-semibold text-primary-700 bg-primary-100 rounded-full capitalize">
+                            <p className="text-base sm:text-lg text-neutral-800 dark:text-neutral-200">Plan</p>
+                            <span className="px-3 py-1 text-xs sm:text-sm font-semibold text-primary-700 bg-primary-100 rounded-full capitalize">
                                 {user.app_metadata.plan}{user.app_metadata.trial_ends_at && new Date(user.app_metadata.trial_ends_at) > new Date() ? ' (Trial)' : ''}
                             </span>
                          </div>
                           {user.app_metadata.plan === 'free' && (
-                            <Button variant="secondary" className="w-full mt-6 h-12" onClick={() => alert('La página de pago se implementará en una futura versión.')}>
+                            <Button variant="secondary" className="w-full mt-6 h-10 sm:h-12" onClick={() => alert('La página de pago se implementará en una futura versión.')}>
                                 Actualizar a PRO
                             </Button>
                           )}
                     </Card>
-                     <Card className="p-6">
-                         <h2 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Apariencia</h2>
+                     <Card className="p-4 sm:p-6">
+                         <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Apariencia</h2>
                          <div className="flex items-center justify-between">
                             <p className="text-neutral-600 dark:text-neutral-400">Modo Oscuro</p>
                             <button onClick={toggleTheme} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${theme === 'dark' ? 'bg-primary-500' : 'bg-neutral-300'}`}>
@@ -126,9 +131,9 @@ const Profile: React.FC = () => {
                             </button>
                          </div>
                     </Card>
-                     <Card className="p-6">
-                         <h2 className="text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Cuenta</h2>
-                         <Button variant="danger" className="w-full h-12" onClick={signOut}>Cerrar Sesión</Button>
+                     <Card className="p-4 sm:p-6">
+                         <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Cuenta</h2>
+                         <Button variant="danger" className="w-full h-10 sm:h-12" onClick={signOut}>Cerrar Sesión</Button>
                     </Card>
                 </div>
             </div>

@@ -87,33 +87,33 @@ const Sales: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <h1 className="text-3xl font-bold text-neutral-800 dark:text-neutral-200">Historial de Ventas</h1>
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h1 className="text-2xl sm:text-3xl font-bold text-neutral-800 dark:text-neutral-200">Historial de Ventas</h1>
                 <div className="flex gap-2">
-                    <Button onClick={handleExport} variant="ghost" className="h-12 w-full md:w-auto">
-                        <Download className="-ml-1 mr-2 h-5 w-5" />
+                    <Button onClick={handleExport} variant="ghost" className="h-10 sm:h-12 w-full sm:w-auto text-sm sm:text-base">
+                        <Download className="-ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                         Exportar
                     </Button>
-                    <Button onClick={() => openModal('newSale')} className="h-12 w-full md:w-auto">
-                        <Plus className="-ml-1 mr-2 h-5 w-5" />
+                    <Button onClick={() => openModal('newSale')} className="h-10 sm:h-12 w-full sm:w-auto text-sm sm:text-base">
+                        <Plus className="-ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                         Registrar Venta
                     </Button>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="flex items-center gap-2">
-                    <Button variant={activeDateFilter === 'all' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('all')}>Todas</Button>
-                    <Button variant={activeDateFilter === 'today' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('today')}>Hoy</Button>
-                    <Button variant={activeDateFilter === 'thisWeek' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('thisWeek')}>Esta Semana</Button>
-                    <Button variant={activeDateFilter === 'thisMonth' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('thisMonth')}>Este Mes</Button>
+            <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-4">
+                <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+                    <Button variant={activeDateFilter === 'all' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('all')} className="h-10 text-xs sm:text-sm">Todas</Button>
+                    <Button variant={activeDateFilter === 'today' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('today')} className="h-10 text-xs sm:text-sm">Hoy</Button>
+                    <Button variant={activeDateFilter === 'thisWeek' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('thisWeek')} className="h-10 text-xs sm:text-sm">Esta Semana</Button>
+                    <Button variant={activeDateFilter === 'thisMonth' ? 'primary' : 'ghost'} onClick={() => setActiveDateFilter('thisMonth')} className="h-10 text-xs sm:text-sm">Este Mes</Button>
                 </div>
                 <div className="w-full md:w-56">
                      <select 
                         value={paymentMethodFilter}
                         onChange={(e) => setPaymentMethodFilter(e.target.value)}
-                        className="w-full h-12 px-3 py-2 border rounded-lg focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-200"
+                        className="w-full h-10 sm:h-12 px-3 py-2 border rounded-lg focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-200 text-sm sm:text-base"
                      >
                         <option value="all">Todos los Métodos</option>
                         <option value="cash">Efectivo</option>
@@ -129,14 +129,14 @@ const Sales: React.FC = () => {
                     {loading ? (
                         <SalesTableSkeleton />
                     ) : sales.length > 0 ? (
-                        <table className="w-full text-left">
+                        <table className="w-full text-left text-sm md:text-base">
                            <thead className="bg-neutral-50 dark:bg-neutral-700/50 border-b border-neutral-200 dark:border-neutral-700">
                                 <tr>
-                                    <th className="p-4 font-semibold text-neutral-600 dark:text-neutral-300">Producto</th>
-                                    <th className="p-4 font-semibold text-neutral-600 dark:text-neutral-300">Cliente</th>
-                                    <th className="p-4 font-semibold text-neutral-600 dark:text-neutral-300">Fecha</th>
-                                    <th className="p-4 font-semibold text-neutral-600 dark:text-neutral-300">Método de Pago</th>
-                                    <th className="p-4 font-semibold text-neutral-600 dark:text-neutral-300 text-right">Monto</th>
+                                    <th className="p-2 sm:p-4 font-semibold text-neutral-600 dark:text-neutral-300">Producto</th>
+                                    <th className="p-2 sm:p-4 font-semibold text-neutral-600 dark:text-neutral-300">Cliente</th>
+                                    <th className="p-2 sm:p-4 font-semibold text-neutral-600 dark:text-neutral-300">Fecha</th>
+                                    <th className="p-2 sm:p-4 font-semibold text-neutral-600 dark:text-neutral-300">Método</th>
+                                    <th className="p-2 sm:p-4 font-semibold text-neutral-600 dark:text-neutral-300 text-right">Monto</th>
                                 </tr>
                            </thead>
                            <tbody className="dark:text-neutral-300">
@@ -145,29 +145,29 @@ const Sales: React.FC = () => {
                                         key={sale.id} 
                                         className="border-b border-neutral-100 dark:border-neutral-700/50"
                                     >
-                                        <td className="p-4">{sale.product_name || 'Producto eliminado'}</td>
-                                        <td className="p-4 text-neutral-500 dark:text-neutral-400">{sale.customer?.name || 'Venta sin cliente'}</td>
-                                        <td className="p-4 text-neutral-500 dark:text-neutral-400">{formatShortDate(sale.created_at)}</td>
-                                        <td className="p-4">
+                                        <td className="p-2 sm:p-4 whitespace-nowrap">{sale.product_name || 'Producto eliminado'}</td>
+                                        <td className="p-2 sm:p-4 text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{sale.customer?.name || 'Venta sin cliente'}</td>
+                                        <td className="p-2 sm:p-4 text-neutral-500 dark:text-neutral-400">{formatShortDate(sale.created_at)}</td>
+                                        <td className="p-2 sm:p-4">
                                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${paymentMethodBadgeColors[sale.payment_method] || ''}`}>
                                                 {translatePaymentMethod(sale.payment_method)}
                                             </span>
                                         </td>
-                                        <td className="p-4 font-medium text-right text-neutral-800 dark:text-neutral-100">{formatCurrency(sale.amount)}</td>
+                                        <td className="p-2 sm:p-4 font-medium text-right text-neutral-800 dark:text-neutral-100">{formatCurrency(sale.amount)}</td>
                                     </tr>
                                 ))}
                            </tbody>
                         </table>
                     ) : (
-                        <div className="p-12 text-center text-neutral-500 dark:text-neutral-400">
+                        <div className="p-8 sm:p-12 text-center text-neutral-500 dark:text-neutral-400">
                             <ShoppingCart className="w-12 h-12 mx-auto text-neutral-400" />
-                            <p className="mt-4 font-semibold">No se encontraron ventas para este período.</p>
+                            <p className="mt-4 font-semibold">No se encontraron ventas.</p>
                             <p className="text-sm mt-1">Intentá con otro filtro o registrá una nueva venta.</p>
                         </div>
                     )}
                 </div>
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-                {sales.length > 0 && <div className="p-4 bg-neutral-50 dark:bg-neutral-700/50 text-right font-bold text-lg text-neutral-800 dark:text-neutral-200 mt-4">Total del Período (Página): {formatCurrency(totalFilteredSales)}</div>}
+                {sales.length > 0 && <div className="p-3 sm:p-4 bg-neutral-50 dark:bg-neutral-700/50 text-right font-bold text-base sm:text-lg text-neutral-800 dark:text-neutral-200 mt-4">Total (Página): {formatCurrency(totalFilteredSales)}</div>}
             </Card>
         </div>
     );
