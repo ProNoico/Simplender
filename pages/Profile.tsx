@@ -111,12 +111,13 @@ const Profile: React.FC = () => {
                      <Card className="p-4 sm:p-6">
                          <h2 className="text-lg sm:text-xl font-semibold text-neutral-700 dark:text-neutral-300 mb-4">Plan Actual</h2>
                          <div className="flex items-center justify-between">
-                            <p className="text-base sm:text-lg text-neutral-800 dark:text-neutral-200">Plan</p>
+                            <p className="text-base sm:text-lg text-neutral-800 dark:text-neutral-200">Plan Actual</p>
                             <span className="px-3 py-1 text-xs sm:text-sm font-semibold text-primary-700 bg-primary-100 rounded-full capitalize">
-                                {user.app_metadata.plan}{user.app_metadata.trial_ends_at && new Date(user.app_metadata.trial_ends_at) > new Date() ? ' (Trial)' : ''}
+                                {user.app_metadata.plan === 'pro' ? 'PRO' : 'Gratuito'}
+                                {user.app_metadata.plan !== 'pro' && user.app_metadata.trial_ends_at && new Date(user.app_metadata.trial_ends_at) > new Date() ? ' (Prueba)' : ''}
                             </span>
                          </div>
-                          {user.app_metadata.plan === 'free' && (
+                          {user.app_metadata.plan !== 'pro' && (
                             <Button variant="secondary" className="w-full mt-6 h-10 sm:h-12" onClick={() => alert('La página de pago se implementará en una futura versión.')}>
                                 Actualizar a PRO
                             </Button>
